@@ -8,6 +8,7 @@ import WinModal from './WinModal';
 import LoseModal from './LoseModal';
 import Header from './Header';
 import Toast from './Toast';
+import HintButton from './HintButton';
 
 const MAX_GUESSES = 6;
 const WORD_LENGTH = 5;
@@ -29,6 +30,11 @@ export default function WordleGame() {
   const [shakingRow, setShakingRow] = useState<number | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [initializing, setInitializing] = useState(true);
+  const [hintsUsed, setHintsUsed] = useState(0);
+  const [hints, setHints] = useState<string[]>([]);
+  const [hintCategory, setHintCategory] = useState<string | null>(null);
+  const [isHintLoading, setIsHintLoading] = useState(false);
+  const MAX_HINTS = 3;
 
   const showToast = useCallback((msg: string) => {
     setToast(msg);
@@ -52,6 +58,9 @@ export default function WordleGame() {
       setShowLoseModal(false);
       setLetterStatuses({});
       setSubmitted(false);
+      setHintsUsed(0);
+      setHints([]);
+      setHintCategory(null);
     } catch (err) {
       console.error('Failed to initialize game:', err);
       showToast('Failed to start game. Retrying...');
@@ -75,6 +84,31 @@ export default function WordleGame() {
   useEffect(() => {
     startNewGame();
   }, [startNewGame]);
+
+  const handleRequestHint = useCallback(async () => {
+    if (!gameToken || hintsUsed >= MAX_HINTS || isHintLoading) return;
+    setIsHintLoading(true);
+    try {
+      const res = await fetch('/api/get-hint', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ gameToken, hintIndex: hintsUsed }),
+      });
+      if (!res.ok) {
+        showToast('Failed to get hint');
+        setIsHintLoading(false);
+        return;
+      }
+      const data = await res.json();
+      setHints(prev => [...prev, data.hint]);
+      setHintCategory(data.category);
+      setHintsUsed(prev => prev + 1);
+    } catch (err) {
+      showToast('Network error getting hint');
+      console.error(err);
+    }
+    setIsHintLoading(false);
+  }, [gameToken, hintsUsed, isHintLoading, showToast]);
 
   const handleKey = useCallback(async (key: string) => {
     if (gameOver || isLoading || !gameToken) return;
@@ -212,6 +246,16 @@ export default function WordleGame() {
           currentRow={guesses.length}
           maxGuesses={MAX_GUESSES}
           shakingRow={shakingRow}
+        />
+
+        <HintButton
+          hintsUsed={hintsUsed}
+          maxHints={MAX_HINTS}
+          hints={hints}
+          category={hintCategory}
+          onRequestHint={handleRequestHint}
+          disabled={gameOver}
+          isLoading={isHintLoading}
         />
 
         <Keyboard

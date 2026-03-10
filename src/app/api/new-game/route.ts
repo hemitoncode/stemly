@@ -13,6 +13,7 @@ export async function GET() {
     return NextResponse.json({
       gameToken,
       wordLength: 5,
+      totalHints: 3,
     });
   } catch (error) {
     console.error('Error creating new game:', error);
