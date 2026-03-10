@@ -213,7 +213,7 @@ export default function WordleGame() {
       await fetch('/api/record-winner', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, numGuesses: guesses.length, gameToken }),
+        body: JSON.stringify({ username, numGuesses: guesses.length, gameToken, hintsUsed }),
       });
       setSubmitted(true);
     } catch (err) {

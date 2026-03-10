@@ -1,40 +1,33 @@
 -- Supabase SQL Schema for STEMly
--- Run this in the Supabase SQL Editor to set up your database
+-- Winners tracking table (standalone — no daily_words dependency)
 
--- Daily words table
-CREATE TABLE IF NOT EXISTS daily_words (
+-- Drop old tables if migrating from the previous schema
+DROP TABLE IF EXISTS winners CASCADE;
+DROP TABLE IF EXISTS daily_words CASCADE;
+
+-- Winners table: records every correct guess with timestamp
+CREATE TABLE winners (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  word TEXT NOT NULL CHECK (length(word) = 5),
-  date DATE NOT NULL UNIQUE,
-  created_at TIMESTAMPTZ DEFAULT now()
+  username TEXT NOT NULL CHECK (char_length(username) >= 1 AND char_length(username) <= 30),
+  word TEXT NOT NULL CHECK (char_length(word) = 5),
+  num_guesses INTEGER NOT NULL CHECK (num_guesses >= 1 AND num_guesses <= 6),
+  hints_used INTEGER NOT NULL DEFAULT 0 CHECK (hints_used >= 0 AND hints_used <= 3),
+  guessed_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- Winners table
-CREATE TABLE IF NOT EXISTS winners (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  username TEXT NOT NULL,
-  word_date DATE NOT NULL REFERENCES daily_words(date),
-  guessed_at TIMESTAMPTZ DEFAULT now(),
-  num_guesses INTEGER NOT NULL CHECK (num_guesses >= 1 AND num_guesses <= 6)
-);
+-- Indexes for admin queries
+CREATE INDEX idx_winners_guessed_at ON winners(guessed_at DESC);
+CREATE INDEX idx_winners_username ON winners(username);
+CREATE INDEX idx_winners_word ON winners(word);
 
--- Index for fast lookups
-CREATE INDEX IF NOT EXISTS idx_daily_words_date ON daily_words(date);
-CREATE INDEX IF NOT EXISTS idx_winners_word_date ON winners(word_date);
-CREATE INDEX IF NOT EXISTS idx_winners_username ON winners(username);
-
--- Row Level Security (optional, for production)
-ALTER TABLE daily_words ENABLE ROW LEVEL SECURITY;
+-- Row Level Security
 ALTER TABLE winners ENABLE ROW LEVEL SECURITY;
 
--- Allow anonymous reads on daily_words (word is never exposed directly)
-CREATE POLICY "Allow anonymous insert on daily_words"
-  ON daily_words FOR INSERT TO anon WITH CHECK (true);
-CREATE POLICY "Allow anonymous select on daily_words"
-  ON daily_words FOR SELECT TO anon USING (true);
-
--- Allow anonymous inserts on winners
+-- Allow anonymous inserts (the game client writes here)
 CREATE POLICY "Allow anonymous insert on winners"
   ON winners FOR INSERT TO anon WITH CHECK (true);
+
+-- Allow anonymous reads (for potential leaderboard features)
 CREATE POLICY "Allow anonymous select on winners"
   ON winners FOR SELECT TO anon USING (true);
