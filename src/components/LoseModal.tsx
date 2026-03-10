@@ -16,7 +16,7 @@ export default function LoseModal({ word, onClose }: LoseModalProps) {
           onClick={onClose}
           className="w-full py-3 bg-[#374151] hover:bg-[#4B5563] text-white font-semibold rounded-xl transition-all active:scale-[0.98]"
         >
-          Come back tomorrow! 🔬
+          Try Again! 🔬
         </button>
       </div>
     </div>

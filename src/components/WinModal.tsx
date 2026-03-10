@@ -51,7 +51,7 @@ export default function WinModal({ numGuesses, onSubmit, isSubmitting, submitted
         ) : (
           <div className="text-center">
             <p className="text-green-400 font-semibold text-lg">✅ Score recorded!</p>
-            <p className="text-[#6B7280] text-sm mt-2">Come back tomorrow for a new STEM word!</p>
+            <p className="text-[#6B7280] text-sm mt-2">Click &quot;New Game&quot; below for another STEM word!</p>
           </div>
         )}
       </div>

@@ -11,8 +11,10 @@ import Toast from './Toast';
 
 const MAX_GUESSES = 6;
 const WORD_LENGTH = 5;
+const STORAGE_KEY = 'stemly_game_token';
 
 export default function WordleGame() {
+  const [gameToken, setGameToken] = useState<string | null>(null);
   const [guesses, setGuesses] = useState<string[]>([]);
   const [results, setResults] = useState<LetterResult[][]>([]);
   const [currentGuess, setCurrentGuess] = useState('');
@@ -26,13 +28,56 @@ export default function WordleGame() {
   const [submitted, setSubmitted] = useState(false);
   const [shakingRow, setShakingRow] = useState<number | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [initializing, setInitializing] = useState(true);
 
   const showToast = useCallback((msg: string) => {
     setToast(msg);
   }, []);
 
+  // Initialize game: fetch a new token and store in localStorage
+  const startNewGame = useCallback(async () => {
+    setInitializing(true);
+    try {
+      const res = await fetch('/api/new-game');
+      if (!res.ok) throw new Error('Failed to start new game');
+      const data = await res.json();
+      localStorage.setItem(STORAGE_KEY, data.gameToken);
+      setGameToken(data.gameToken);
+      setGuesses([]);
+      setResults([]);
+      setCurrentGuess('');
+      setGameOver(false);
+      setWon(false);
+      setLostWord('');
+      setShowLoseModal(false);
+      setLetterStatuses({});
+      setSubmitted(false);
+    } catch (err) {
+      console.error('Failed to initialize game:', err);
+      showToast('Failed to start game. Retrying...');
+      setTimeout(async () => {
+        try {
+          const res = await fetch('/api/new-game');
+          if (!res.ok) throw new Error('Retry failed');
+          const data = await res.json();
+          localStorage.setItem(STORAGE_KEY, data.gameToken);
+          setGameToken(data.gameToken);
+        } catch {
+          showToast('Could not connect to server.');
+        }
+      }, 2000);
+    } finally {
+      setInitializing(false);
+    }
+  }, [showToast]);
+
+  // On mount, always start a fresh game
+  useEffect(() => {
+    startNewGame();
+  }, [startNewGame]);
+
   const handleKey = useCallback(async (key: string) => {
-    if (gameOver || isLoading) return;
+    if (gameOver || isLoading || !gameToken) return;
 
     if (key === 'Backspace') {
       setCurrentGuess(prev => prev.slice(0, -1));
@@ -52,11 +97,11 @@ export default function WordleGame() {
         const res = await fetch('/api/validate-guess', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ guess: currentGuess.toLowerCase() }),
+          body: JSON.stringify({ guess: currentGuess.toLowerCase(), gameToken }),
         });
-        
+
         const data = await res.json();
-        
+
         if (!res.ok) {
           showToast(data.error || 'Invalid guess');
           setShakingRow(guesses.length);
@@ -67,7 +112,7 @@ export default function WordleGame() {
 
         const newGuesses = [...guesses, currentGuess.toLowerCase()];
         const newResults = [...results, data.results];
-        
+
         setGuesses(newGuesses);
         setResults(newResults);
         setCurrentGuess('');
@@ -90,12 +135,14 @@ export default function WordleGame() {
           setWon(true);
           setGameOver(true);
         } else if (newGuesses.length >= MAX_GUESSES) {
-          // Fetch the word to show in lose modal
           try {
-            const wordRes = await fetch('/api/daily-word');
-            const wordData = await wordRes.json();
-            // We need the actual word for the lose screen — add a reveal endpoint or decode
-            setLostWord(atob(wordData.wordId));
+            const revealRes = await fetch('/api/reveal-word', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ gameToken }),
+            });
+            const revealData = await revealRes.json();
+            setLostWord(revealData.word || '?????');
           } catch {
             setLostWord('?????');
           }
@@ -114,7 +161,7 @@ export default function WordleGame() {
     if (/^[a-zA-Z]$/.test(key) && currentGuess.length < WORD_LENGTH) {
       setCurrentGuess(prev => prev + key.toLowerCase());
     }
-  }, [currentGuess, gameOver, guesses, isLoading, letterStatuses, results, showToast]);
+  }, [currentGuess, gameOver, guesses, isLoading, letterStatuses, results, showToast, gameToken]);
 
   // Physical keyboard listener
   useEffect(() => {
@@ -132,7 +179,7 @@ export default function WordleGame() {
       await fetch('/api/record-winner', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, numGuesses: guesses.length }),
+        body: JSON.stringify({ username, numGuesses: guesses.length, gameToken }),
       });
       setSubmitted(true);
     } catch (err) {
@@ -142,12 +189,21 @@ export default function WordleGame() {
     setIsSubmitting(false);
   };
 
+  if (initializing) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center">
+        <Header />
+        <div className="mt-8 text-[#8B5CF6] text-lg animate-pulse">Loading your puzzle...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      
+
       {toast && <Toast message={toast} onDismiss={() => setToast(null)} />}
-      
+
       <main className="flex-1 flex flex-col items-center justify-center gap-6 p-4 max-w-lg mx-auto w-full">
         <GameBoard
           guesses={guesses}
@@ -157,19 +213,25 @@ export default function WordleGame() {
           maxGuesses={MAX_GUESSES}
           shakingRow={shakingRow}
         />
-        
+
         <Keyboard
           letterStatuses={letterStatuses}
           onKey={handleKey}
           disabled={gameOver || isLoading}
         />
-        
+
         {isLoading && (
           <div className="text-[#8B5CF6] text-sm animate-pulse">Checking...</div>
         )}
       </main>
 
       <footer className="text-center py-3 text-[#4B5563] text-xs border-t border-[#374151]/30">
+        <button
+          onClick={startNewGame}
+          className="text-[#8B5CF6] hover:text-[#A78BFA] underline mr-4 transition-colors"
+        >
+          New Game
+        </button>
         Built with 🔬 for STEM enthusiasts
       </footer>
 
@@ -181,7 +243,7 @@ export default function WordleGame() {
           submitted={submitted}
         />
       )}
-      
+
       {showLoseModal && (
         <LoseModal word={lostWord} onClose={() => setShowLoseModal(false)} />
       )}

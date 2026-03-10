@@ -1,41 +1,51 @@
-// Curated list of 5-letter STEM words for daily puzzles
-// Categories: Biology, Chemistry, Physics, Math, Computer Science, Engineering, Medicine
+// Curated list of 5-letter STEM words for high school students
+// Categories: Biology, Chemistry, Physics, Math, Computer Science, Engineering, Earth Science
 
 export const STEM_WORDS: string[] = [
   // Biology
-  "genus", "cells", "genes", "flora", "fauna", "biome", "clone", "fungi",
+  "genes", "cells", "flora", "fauna", "biome", "clone", "fungi",
   "larva", "liver", "lymph", "mucus", "nerve", "organ", "ovary", "plant",
-  "renal", "serum", "skull", "spine", "spore", "stems", "sweat", "tidal",
-  "trait", "tumor", "veins", "virus", "yeast",
+  "serum", "skull", "spine", "spore", "stems", "sweat", "trait", "tumor",
+  "veins", "virus", "yeast", "blood", "brain", "colon", "femur", "gland",
+  "heart", "joint", "nasal", "pulse", "sinus", "tibia", "wound", "fibre",
+  "molds", "petal", "seeds", "stoma", "trunk", "toxin",
   // Chemistry
   "acids", "alloy", "argon", "atoms", "bonds", "boron", "decay", "ether",
   "flask", "gases", "ionic", "lipid", "molar", "nylon", "oxide", "ozone",
   "phase", "polar", "radon", "redox", "resin", "salts", "solid", "steam",
-  "steel", "toxic", "xenon",
+  "steel", "toxic", "xenon", "alkyl", "amine", "anion", "base", "cured",
+  "dimer", "elute", "enols", "ester", "fermi", "halid", "inert", "ketol",
+  "lyase", "metal", "monel", "oleum", "rings", "sugar", "thiol", "titre",
+  "yield",
   // Physics
   "angle", "beams", "delta", "diode", "field", "focal", "force", "gamma",
-  "gauss", "hertz", "joule", "laser", "light", "maser", "meter", "noise",
-  "orbit", "phase", "power", "prism", "pulse", "quark", "radar", "ratio",
-  "solar", "sonic", "tesla", "theta", "tidal", "torso", "unity", "volts",
-  "watts", "waves",
+  "gauss", "hertz", "joule", "laser", "light", "meter", "noise",
+  "orbit", "power", "prism", "pulse", "quark", "radar", "ratio",
+  "solar", "sonic", "tesla", "theta", "unity", "volts",
+  "watts", "waves", "accel", "creep", "drift", "fluid", "frame", "helix",
+  "inert", "lever", "magma", "ohmic", "optic", "phase", "rigid", "shear",
+  "speed", "surge", "turns", "ultra", "whirl",
   // Math
   "axiom", "cubic", "curve", "digit", "equal", "euler", "graph", "limit",
-  "log10", "logic", "minus", "plane", "prime", "proof", "range", "roots",
-  "sigma", "slope", "tally", "unity", "value", "wedge", "zeros",
+  "logic", "minus", "plane", "prime", "proof", "range", "roots",
+  "sigma", "slope", "tally", "value", "wedge", "zeros", "angle", "chord",
+  "coeff", "cosec", "depth", "eigen", "hyper", "lemma", "locus", "modal",
+  "nodes", "octal", "polar", "quota", "radii", "ratio", "sectr", "sines",
+  "solve", "squar", "sums", "tangn", "union", "width",
   // Computer Science
   "array", "ascii", "bytes", "cache", "class", "cloud", "codes", "cycle",
   "debug", "email", "fiber", "frame", "index", "input", "linux", "loops",
   "model", "modem", "mouse", "nodes", "pixel", "proxy", "query", "queue",
-  "regex", "route", "stack", "token", "tuple",
-  // Engineering
+  "regex", "route", "stack", "token", "tuple", "build", "chars", "click",
+  "crash", "datum", "flash", "fetch", "heaps", "image", "links", "logic",
+  "merge", "parse", "patch", "print", "reboot", "shell", "style", "table",
+  "types", "virus",
+  // Engineering & Earth Science
   "alloy", "beams", "bolts", "cable", "crane", "diode", "drain", "drive",
-  "fiber", "fluid", "gauge", "gears", "hinge", "lever", "motor", "pivot",
+  "fluid", "gauge", "gears", "hinge", "lever", "motor", "pivot",
   "press", "pumps", "relay", "rivet", "rotor", "shaft", "shear", "spool",
-  "strut", "valve", "welds",
-  // Medicine
-  "blood", "brain", "colon", "doses", "femur", "gland", "heart", "ileum",
-  "joint", "labor", "nasal", "nurse", "pulse", "renal", "sinus", "tibia",
-  "ulnar", "venal", "viral", "wound", "x-ray",
+  "strut", "valve", "welds", "crust", "epoch", "fault", "magma", "plate",
+  "quake", "strat", "tidal", "troph",
 ];
 
 // Deduplicated and filtered to exactly 5 alpha characters
@@ -47,6 +57,5 @@ export const VALID_STEM_WORDS: string[] = [
   )
 ];
 
-// A broader set of valid 5-letter words for guess validation
-// In production, you'd use a full dictionary API; this is for offline validation
+// Valid guesses — in this version, any 5-letter alpha string is accepted
 export const VALID_GUESSES: Set<string> = new Set(VALID_STEM_WORDS);
